@@ -1,0 +1,3 @@
+[submodule "mp3gain"]
+	path = mp3gain
+	url = git@github.com:ybootin/mp3gain.git
