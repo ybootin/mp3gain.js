@@ -1,0 +1,244 @@
+<doctype html>
+<html>
+  <head>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="../dist/mp3gain.js"></script>
+    <style>
+      #original-container:after {
+        content: "MP3";
+      }
+      #processed-container:after {
+        content: "Processed MP3";
+      }
+
+      #files-container li {
+        list-style-type: none;
+      }
+
+      .bordered-container {
+        position: relative;
+        margin: 20px 0;
+        padding: 30px 10px 10px 10px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        -webkit-border-radius: 4px;
+        -moz-border-radius: 4px;
+        border-radius: 4px;
+        font-family: Menlo, Monaco, "Courier New", monospace;
+        font-size: 12px;
+        min-height: 100px;
+      }
+
+      .bordered-container:after {
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        padding: 3px 7px;
+        font-size: 12px;
+        font-weight: bold;
+        background-color: #f5f5f5;
+        border: 1px solid #ddd;
+        color: #9da0a4;
+        -webkit-border-radius: 4px 0 4px 0;
+        -moz-border-radius: 4px 0 4px 0;
+        border-radius: 4px 0 4px 0;
+      }
+
+      .bordered-container li {
+        list-style-type: none;
+      }
+
+      #console:after {
+        content: "MP3GAIN output";
+      }
+
+      #console .line.error {
+        color: red;
+      }
+    </style>
+    <script>
+      function formatDate(num) {
+        return (num < 10 ? "0" : "") + num;
+      }
+
+      function logToConsole(data, container, error) {
+        var date = new Date();
+        name = JSON.stringify(data).replace('\\t', '&nbsp;&nbsp;&nbsp;&nbsp;').replace('\\r', '<br />')
+
+        var element = document.createElement('div')
+        element.className = 'line' + (error && ' error')
+        element.innerHTML = '<span class="date">' + formatDate(date.getHours()) + ':' + formatDate(date.getMinutes()) + ':' + formatDate(date.getSeconds()) + '</span> <span class="value">' + name + '</span>'
+
+        container.appendChild(element)
+      }
+
+      function clearContainer(container) {
+        Array.from(container.children).forEach(function(child) {
+          container.removeChild(child)
+        })
+      }
+
+      $(document).ready(function() {
+        var addBtn = document.getElementById('add-file-button')
+        var runBtn = document.getElementById('run-button')
+        var consoleCnt = document.getElementById('console')
+
+        var inputFile = document.getElementById('input-file')
+        var originalContainer = document.getElementById('original-container')
+        var processedContainer = document.getElementById('processed-container')
+
+        var audio = document.createElement('audio')
+
+        var files = []
+
+        function addFile(file) {
+          return new Promise(function(resolve, reject) {
+            var reader = new FileReader()
+
+            reader.addEventListener("loadend", function(evt) {
+              var data = {
+                name: file.name,
+                data: new Uint8Array(reader.result)
+              }
+
+              files.push(data)
+              addFileLine(data, originalContainer)
+              resolve()
+            })
+
+            reader.onerror = reject
+            reader.readAsArrayBuffer(file)
+          })
+        }
+
+        function addFileLine(file, container) {
+          if (container.firstChild && container.firstChild.className === 'empty') {
+            container.removeChild(container.firstChild)
+          }
+
+          var url = window.URL.createObjectURL(new Blob([file.data], {
+            type: 'application/force-download'
+          }))
+
+          var li = document.createElement('li')
+          li.innerHTML = '<div><button class="glyphicon glyphicon-play"></button><button class="glyphicon glyphicon-download" href="' + url + '" target="_blank"></button><span class="filename">' + file.name + '</span><div>'
+
+          var playButton = li.getElementsByClassName('glyphicon-play')[0]
+          playButton.addEventListener('click', function(evt) {
+            evt.preventDefault()
+            if (evt.target.className.indexOf('glyphicon-play') > -1) {
+              if (audio.src !== url) {
+                audio.src = url
+              }
+              audio.play()
+            } else {
+              audio.pause()
+            }
+          })
+
+          var downloadButton = li.getElementsByClassName('glyphicon-download')[0]
+          downloadButton.addEventListener('click', function(evt) {
+            evt.preventDefault()
+            window.open(url)
+          })
+
+          var onEvent = function(evt) {
+            switch (evt.type) {
+              case 'playing':
+              case 'pause':
+                playButton.className = 'glyphicon ' + (audio.src === url && evt.type === 'playing' ? 'glyphicon-pause' : 'glyphicon-play')
+                break
+            }
+          }
+
+          audio.addEventListener('playing', onEvent)
+          audio.addEventListener('pause', onEvent)
+          container.appendChild(li)
+        }
+
+        function run() {
+          var encoder = new mp3gain.MP3Gain('../dist/mp3gain-bin.js')
+
+          encoder.on(mp3gain.MP3Gain.ON_STDOUT, function(txt) {
+            logToConsole(txt, consoleCnt)
+          })
+          encoder.on(mp3gain.MP3Gain.ON_STDERROR, function(txt) {
+            logToConsole(txt, consoleCnt, true)
+          })
+
+          files.forEach(function(file) {
+            encoder.addFile(file)
+          })
+
+          var args = document.getElementById('arguments').value
+
+          encoder.run(args).then(function(files) {
+            clearContainer(processedContainer)
+
+            files.forEach(function(file) {
+              addFileLine(file, processedContainer)
+            })
+
+            if (files.length === 0) {
+              var empty = document.createElement('li')
+              empty.className = 'empty'
+              empty.innerHTML = 'No file where processed by encoder'
+
+              processedContainer.appendChild(empty)
+            }
+          }).catch(function(error) {
+            console.error(error)
+          })
+        }
+
+        inputFile.onchange = function(evt) {
+          Array.from(evt.target.files).forEach(function(file) {
+            addFile(file)
+          })
+        }
+
+        addBtn.addEventListener('click', function(evt) {
+          inputFile.click()
+        })
+
+        runBtn.addEventListener('click', function() {
+          run()
+        })
+      })
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>MP3Gain.js - Demo</h1>
+      <p>
+        Encode MP3 file directly into the browser. MP3Gain.js is the port of <a href="http://mp3gain.sourceforge.net/" target="_blank">mp3gain</a> in javascript via emscripten.<br />
+        Display command list, use <a href='javascript:document.getElementById("arguments").value="-h";document.getElementById("arguments").click()'>-h argument</a>.
+        Original mp3gain documentation available <a href="https://www.mankier.com/1/mp3gain" target="_blank">here</a>.<br />
+      </p>
+      <div clas="row">
+        <div class="form-inline">
+          <button type="button" id="add-file-button" class="btn btn-default">Add MP3 files</button>
+          <button id="run-button" type="button" class="btn btn-default">Run with arguments</button>
+          <input id="arguments" type="text" class="form-control" value="-a">
+        </div>
+        <form>
+          <ul id="original-container" class="bordered-container"><li class="empty">No MP3 added</li></ul>
+          <ul id="processed-container" class="bordered-container"><li class="empty">No MP3 processed, add file(s) and press run !</li></ul>
+          <input type="file" multiple accept="audio/mp3" id="input-file" style="display:none">
+
+
+          <div id="console" class="bordered-container"></div>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>
+</doctype>

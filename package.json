@@ -1,0 +1,30 @@
+{
+  "name": "mp3gain",
+  "version": "0.0.1",
+  "description": "port of mp3gain in javascript, for use in browser",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ybootin/mp3gain.js.git"
+  },
+  "keywords": [
+    "mp3",
+    "normalize",
+    "emscripten",
+    "browser"
+  ],
+  "author": "Yohan Boutin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ybootin/mp3gain.js/issues"
+  },
+  "homepage": "https://github.com/ybootin/mp3gain.js#readme",
+  "dependencies": {
+    "emloader": "0.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^2.6.2"
+  }
+}
