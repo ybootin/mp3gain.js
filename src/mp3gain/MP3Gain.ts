@@ -1,5 +1,6 @@
 /// <reference path="../../node_modules/emloader/src/emloader/Emloader.ts" />
 /// <reference path="../../typings/index.d.ts" />
+/// <reference path="./model.ts" />
 
 namespace mp3gain {
 	export class MP3Gain extends emloader.event.EventEmiter {
@@ -77,6 +78,28 @@ namespace mp3gain {
           })
         })
       })
-		}
+    }
+
+    public runAsWorker(args: Array<string>|string): Promise<emloader.IFile[]> {
+      return new Promise((resolve, reject) => {
+        const worker = new Worker(this.binpath)
+
+        worker.onmessage = (evt: IPostMessageResponse) => {
+          if (Array.isArray(evt.data)) {
+            worker.terminate()
+            resolve(evt.data)
+          } else {
+            this.emit(evt.data.stderr ? MP3Gain.ON_STDERROR : MP3Gain.ON_STDOUT, evt.data.stderr || evt.data.stdout)
+          }
+        }
+
+        worker.postMessage({
+          binpath: this.binpath,
+          files: this.files,
+          arguments: args,
+        })
+      })
+
+    }
 	}
 }
