@@ -1,5 +1,5 @@
 {
-  "name": "mp3gain",
+  "name": "mp3gain.js",
   "version": "0.0.1",
   "description": "port of mp3gain in javascript, for use in browser",
   "scripts": {
@@ -9,8 +9,16 @@
     "type": "git",
     "url": "git+https://github.com/ybootin/mp3gain.js.git"
   },
+  "files": [
+    "dist/*",
+    "src/*",
+    "typings/*",
+    "demo/*",
+    "README.md"
+  ],
   "keywords": [
     "mp3",
+    "audio",
     "normalize",
     "emscripten",
     "browser"
