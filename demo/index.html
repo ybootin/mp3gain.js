@@ -34,7 +34,9 @@
         border-radius: 4px;
         font-family: Menlo, Monaco, "Courier New", monospace;
         font-size: 12px;
-        min-height: 100px;
+        min-height: 180px;
+        max-height: 180px;
+        overflow: scroll;
       }
 
       .bordered-container:after {
@@ -60,8 +62,13 @@
         content: "MP3GAIN output";
       }
 
-      #console .line.error {
+      #console .error {
         color: red;
+      }
+
+      .glyphicon-download {
+        margin-left: 4px;
+        margin-right: 8px;
       }
     </style>
     <script>
@@ -74,8 +81,8 @@
         name = JSON.stringify(data).replace('\\t', '&nbsp;&nbsp;&nbsp;&nbsp;').replace('\\r', '<br />')
 
         var element = document.createElement('div')
-        element.className = 'line' + (error && ' error')
         element.innerHTML = '<span class="date">' + formatDate(date.getHours()) + ':' + formatDate(date.getMinutes()) + ':' + formatDate(date.getSeconds()) + '</span> <span class="value">' + name + '</span>'
+        element.className = (error ? ' error' : '')
 
         container.appendChild(element)
       }
@@ -111,7 +118,7 @@
 
               files.push(data)
               addFileLine(data, originalContainer)
-              resolve()
+              resolve(data)
             })
 
             reader.onerror = reject
@@ -131,6 +138,7 @@
           var li = document.createElement('li')
           li.innerHTML = '<div><button class="glyphicon glyphicon-play"></button><button class="glyphicon glyphicon-download" href="' + url + '" target="_blank"></button><span class="filename">' + file.name + '</span><div>'
 
+          // handle play button
           var playButton = li.getElementsByClassName('glyphicon-play')[0]
           playButton.addEventListener('click', function(evt) {
             evt.preventDefault()
@@ -144,12 +152,7 @@
             }
           })
 
-          var downloadButton = li.getElementsByClassName('glyphicon-download')[0]
-          downloadButton.addEventListener('click', function(evt) {
-            evt.preventDefault()
-            window.open(url)
-          })
-
+          // handle audio event, and change play/pause button icon
           var onEvent = function(evt) {
             switch (evt.type) {
               case 'playing':
@@ -161,6 +164,13 @@
 
           audio.addEventListener('playing', onEvent)
           audio.addEventListener('pause', onEvent)
+
+          // handle download button click
+          li.getElementsByClassName('glyphicon-download')[0].addEventListener('click', function(evt) {
+            evt.preventDefault()
+            window.open(url)
+          })
+
           container.appendChild(li)
         }
 
@@ -190,7 +200,7 @@
             if (files.length === 0) {
               var empty = document.createElement('li')
               empty.className = 'empty'
-              empty.innerHTML = 'No file where processed by encoder'
+              empty.innerHTML = 'No file processed by encoder'
 
               processedContainer.appendChild(empty)
             }
@@ -219,7 +229,7 @@
     <div class="container">
       <h1>MP3Gain.js - Demo</h1>
       <p>
-        Encode MP3 file directly into the browser. MP3Gain.js is the port of <a href="http://mp3gain.sourceforge.net/" target="_blank">mp3gain</a> in javascript via emscripten.<br />
+        Normalize MP3 file directly into the browser. MP3Gain.js is the port of <a href="http://mp3gain.sourceforge.net/" target="_blank">mp3gain</a> in javascript via emscripten.<br />
         Display command list, use <a href='javascript:document.getElementById("arguments").value="-h";document.getElementById("arguments").click()'>-h argument</a>.
         Original mp3gain documentation available <a href="https://www.mankier.com/1/mp3gain" target="_blank">here</a>.<br />
       </p>
@@ -233,8 +243,6 @@
           <ul id="original-container" class="bordered-container"><li class="empty">No MP3 added</li></ul>
           <ul id="processed-container" class="bordered-container"><li class="empty">No MP3 processed, add file(s) and press run !</li></ul>
           <input type="file" multiple accept="audio/mp3" id="input-file" style="display:none">
-
-
           <div id="console" class="bordered-container"></div>
         </form>
       </div>
