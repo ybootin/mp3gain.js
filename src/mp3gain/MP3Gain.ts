@@ -87,7 +87,7 @@ namespace mp3gain {
         worker.onmessage = (evt: IPostMessageResponse) => {
           console.log('got worker response !', evt)
           if (Array.isArray(evt.data)) {
-            //worker.terminate()
+            worker.terminate()
             resolve(evt.data)
           } else {
             this.emit(evt.data.stderr ? MP3Gain.ON_STDERROR : MP3Gain.ON_STDOUT, evt.data.stderr || evt.data.stdout)

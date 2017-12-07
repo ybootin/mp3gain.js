@@ -70,6 +70,30 @@
         margin-left: 4px;
         margin-right: 8px;
       }
+
+      /* loading animation on submitButton */
+      .glyphicon-refresh {
+        -animation: spin .7s infinite linear;
+        -ms-animation: spin .7s infinite linear;
+        -webkit-animation: spinw .7s infinite linear;
+        -moz-animation: spinm .7s infinite linear;
+        margin-right: 10px;
+      }
+
+      @keyframes spin {
+        from { transform: scale(1) rotate(0deg);}
+        to { transform: scale(1) rotate(360deg);}
+      }
+
+      @-webkit-keyframes spinw {
+        from { -webkit-transform: rotate(0deg);}
+        to { -webkit-transform: rotate(360deg);}
+      }
+
+      @-moz-keyframes spinm {
+        from { -moz-transform: rotate(0deg);}
+        to { -moz-transform: rotate(360deg);}
+      }
     </style>
     <script>
       function formatDate(num) {
@@ -96,6 +120,8 @@
       $(document).ready(function() {
         var addBtn = document.getElementById('add-file-button')
         var runBtn = document.getElementById('run-button')
+        var runGlyphicon = runBtn.getElementsByClassName('glyphicon-play')[0]
+
         var consoleCnt = document.getElementById('console')
 
         var inputFile = document.getElementById('input-file')
@@ -204,6 +230,10 @@
 
               processedContainer.appendChild(empty)
             }
+
+            // enable run btn
+            runGlyphicon.className = runGlyphicon.className.replace('glyphicon-refresh', 'glyphicon-play')
+            runBtn.disabled = false
           }).catch(function(error) {
             console.error(error)
           })
@@ -220,6 +250,8 @@
         })
 
         runBtn.addEventListener('click', function() {
+          runGlyphicon.className = runGlyphicon.className.replace('glyphicon-play', 'glyphicon-refresh')
+          runBtn.disabled = true
           run()
         })
       })
@@ -235,8 +267,14 @@
       </p>
       <div clas="row">
         <div class="form-inline">
-          <button type="button" id="add-file-button" class="btn btn-default">Add MP3 files</button>
-          <button id="run-button" type="button" class="btn btn-default">Run with arguments</button>
+          <button type="button" id="add-file-button" class="btn btn-default">
+            <span class="glyphicon glyphicon-plus"></span>
+            <span class="text">Add MP3 files</span>
+          </button>
+          <button id="run-button" type="button" class="btn btn-default">
+            <span class="glyphicon glyphicon-play"></span>
+            <span class="text">Run with arguments</span>
+          </button>
           <input id="arguments" type="text" class="form-control" value="-a">
         </div>
         <form>
