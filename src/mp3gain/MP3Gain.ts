@@ -2,6 +2,11 @@
 /// <reference path="../../typings/index.d.ts" />
 /// <reference path="./model.ts" />
 
+interface Window {
+  Worker: any
+}
+declare var window: Window
+
 namespace mp3gain {
 	export class MP3Gain extends emloader.event.EventEmiter {
     static ON_STDERROR: string =  'onstderror'
@@ -17,7 +22,7 @@ namespace mp3gain {
      */
     private mp3Path: string = '/mp3'
 
-		constructor(private binpath: string) {
+		constructor(protected binpath: string) {
       super()
     }
 
@@ -47,7 +52,15 @@ namespace mp3gain {
       }))
     }
 
-		public run(args: Array<string>|string): Promise<emloader.IFile[]> {
+    public run(args: Array<string>|string): Promise<emloader.IFile[]> {
+      if (window.Worker) {
+        return this.runAsWorker(args)
+      } else {
+        return this.runWithEmloader(args)
+      }
+    }
+
+		public runWithEmloader(args: Array<string>|string): Promise<emloader.IFile[]> {
       return emloader.loadHeadless(this.binpath).then((loader) => {
         const safeArgs = Array.isArray(args) ? args : args.trim().split(' ')
 

@@ -10,7 +10,7 @@
 
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <script src="../dist/mp3gain.js"></script>
+    <script src="../dist/mp3gain-embed.js"></script>
     <style>
       #original-container:after {
         content: "MP3";
@@ -201,7 +201,8 @@
         }
 
         function run() {
-          var encoder = new mp3gain.MP3Gain('../dist/mp3gain-worker.js')
+          //var encoder = new mp3gain.MP3Gain('../dist/mp3gain-worker.js')
+          var encoder = mp3gain.getInstance()
 
           encoder.on(mp3gain.MP3Gain.ON_STDOUT, function(txt) {
             logToConsole(txt, consoleCnt)
@@ -216,7 +217,7 @@
 
           var args = document.getElementById('arguments').value
 
-          encoder.runAsWorker(args).then(function(files) {
+          encoder.run(args).then(function(files) {
             clearContainer(processedContainer)
 
             files.forEach(function(file) {
