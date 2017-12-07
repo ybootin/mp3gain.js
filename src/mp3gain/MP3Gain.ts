@@ -35,7 +35,10 @@ namespace mp3gain {
     }
 
     public removeFile(file: emloader.IFile): void {
-      this.files.slice(this.files.indexOf(file), 1)
+      const index = this.files.indexOf(file)
+      if (index > -1) {
+        this.files.splice(index, 1)
+      }
     }
 
     public removeFiles() {

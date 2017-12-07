@@ -28,7 +28,7 @@
   "homepage": "https://github.com/ybootin/mp3gain.js#readme",
   "dependencies": {},
   "devDependencies": {
-    "emloader": "^0.0.6",
+    "emloader": "^0.0.7",
     "typescript": "^2.6.2",
     "uglify-js": "^3.2.1"
   },

@@ -16,9 +16,18 @@ const Module  = <mp3gain.IModule><any>{
   }
 }
 
-function writeFile(filename, data) {
-  FS.writeFile(filename, data, {
+function writeFile(filename, data): string {
+  const path = mp3path + '/' + filename
+  FS.writeFile(path, data, {
     encoding: 'binary'
+  })
+
+  return path
+}
+
+function readFile(filename): Uint8Array {
+  return FS.readFile(mp3path + '/' + filename, {
+    encoding: 'binary',
   })
 }
 
@@ -30,9 +39,7 @@ function response(files: Array<emloader.IFile>) {
   postMessage(files.map((file) => {
     return {
       name: file.name,
-      data: FS.readFile(mp3path + '/' + file.name, {
-        encoding: 'binary',
-      })
+      data: readFile(file.name),
     }
   }))
 }
@@ -43,8 +50,7 @@ onmessage = (evt: mp3gain.IMessageEvent) => {
   // write files into FS and update arguments
   FS.mkdir(mp3path)
   evt.data.files.forEach((file) => {
-    writeFile(mp3path + '/' + file.name, file.data)
-    args.push(mp3path + '/' + file.name)
+    args.push(writeFile(file.name, file.data))
   })
 
   // exec binary

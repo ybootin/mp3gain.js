@@ -104,6 +104,10 @@
         margin-right: 10px;
       }
 
+      .glyphicon-remove-circle {
+        cursor: pointer;
+      }
+
       @keyframes spin {
         from { transform: scale(1) rotate(0deg);}
         to { transform: scale(1) rotate(360deg);}
@@ -165,7 +169,11 @@
 
         var audio = document.createElement('audio')
 
-        var encoder = mp3gain.getInstance()
+        // embed encoder, the simpliest way
+        //var encoder = mp3gain.getInstance()
+
+        // worker binary, the most optimized, and also easiest for debugging, as you don't need to rebuild all when debugging
+        var encoder = new mp3gain.MP3Gain('../dist/mp3gain-worker.js')
 
         encoder.on(mp3gain.MP3Gain.ON_STDOUT, function(txt) {
           logToConsole(txt, consoleCnt)
@@ -184,7 +192,7 @@
         }
 
         function addFile(file) {
-          return new Promise(function(resolve, reject) {
+          return (new Promise(function(resolve, reject) {
             var reader = new FileReader()
 
             reader.addEventListener("loadend", function(evt) {
@@ -201,6 +209,9 @@
 
             reader.onerror = reject
             reader.readAsArrayBuffer(file)
+          })).catch(function(error) {
+            console.error(error)
+            addEmpty('<span class="error">Error, unable to readfile ' + (file ? file.name : '') + '</span>', originalContainer)
           })
         }
 
@@ -214,7 +225,7 @@
           }))
 
           var li = document.createElement('li')
-          li.innerHTML = '<div><button class="glyphicon glyphicon-play"></button><button class="glyphicon glyphicon-download" href="' + url + '" target="_blank"></button><span class="filename">' + file.name + '</span><div>'
+          li.innerHTML = '<div><button class="glyphicon glyphicon-play" /><button class="glyphicon glyphicon-download" href="' + url + '" target="_blank"></button><span class="filename">' + file.name + '</span><span class="glyphicon glyphicon-remove-circle pull-right"/><div>'
 
           // handle play button
           var playButton = li.getElementsByClassName('glyphicon-play')[0]
@@ -249,10 +260,24 @@
             window.open(url)
           })
 
+          // handle remove
+          li.getElementsByClassName('glyphicon-remove-circle')[0].addEventListener('click', function(evt) {
+            // only main originalcontainer have files registered on encoder
+            if (container === originalContainer) {
+              encoder.removeFile(file)
+            }
+
+            container.removeChild(li)
+          })
+
           container.appendChild(li)
         }
 
         function run() {
+          // disable run btn
+          runGlyphicon.className = runGlyphicon.className.replace('glyphicon-play', 'glyphicon-refresh')
+          runBtn.disabled = true
+
           var args = document.getElementById('arguments').value
 
           clearContainer(processedContainer)
@@ -274,8 +299,11 @@
             runBtn.disabled = false
           }).catch(function(error) {
             console.error(error)
+            addEmpty('Error', processedContainer)
           })
         }
+        // for easy trigger inside demo
+        window.run = run
 
         inputFile.onchange = function(evt) {
           Array.from(evt.target.files).forEach(function(file) {
@@ -288,8 +316,6 @@
         })
 
         runBtn.addEventListener('click', function() {
-          runGlyphicon.className = runGlyphicon.className.replace('glyphicon-play', 'glyphicon-refresh')
-          runBtn.disabled = true
           run()
         })
 
@@ -312,9 +338,11 @@
   <body>
     <div class="container">
       <h1>MP3Gain.js - Demo</h1>
+      <p class="lead">Analyse and Normalize MP3 file directly into the browser.</p>
       <p>
-        Normalize MP3 file directly into the browser. MP3Gain.js is the port of <a href="http://mp3gain.sourceforge.net/" target="_blank">mp3gain</a> in javascript via emscripten.<br />
-        Display command list, use <a href='javascript:document.getElementById("arguments").value="-h";document.getElementById("arguments").click()'>-h argument</a>.
+        MP3Gain.js is the port of <a href="http://mp3gain.sourceforge.net/" target="_blank">mp3gain</a> in javascript via emscripten.
+        mp3gain can analyze and adjust mp3 files  so that they have the same volume.<br />
+        Display command list, use <a href='javascript:document.getElementById("arguments").value="-h";run()'>-h argument</a>.
         Original mp3gain documentation available <a href="https://www.mankier.com/1/mp3gain" target="_blank">here</a>.<br />
       </p>
       <div clas="row">
@@ -347,6 +375,7 @@
         </form>
       </div>
     </div>
+    <a href="https://github.com/ybootin/mp3gain.js"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
   </body>
 </html>
 </doctype>
