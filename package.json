@@ -1,7 +1,7 @@
 {
   "name": "mp3gain.js",
   "version": "0.0.1",
-  "description": "port of mp3gain in javascript, for use in browser",
+  "description": "port of mp3gain in javascript, ajust gain of your MP3 inside your browser",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ybootin/mp3gain.js.git"
@@ -28,16 +28,19 @@
   "homepage": "https://github.com/ybootin/mp3gain.js#readme",
   "dependencies": {},
   "devDependencies": {
+    "emloader": "^0.0.6",
     "typescript": "^2.6.2",
-    "emloader": "^0.0.6"
+    "uglify-js": "^3.2.1"
   },
   "scripts": {
     "prepublish": "npm run build",
-    "build": "npm run buildmp3gain && npm run buildbinary && npm run buildworker && npm run buildembed",
-    "buildmp3gain": "node_modules/typescript/bin/tsc -d  --target es5 --sourceMap --outFile dist/mp3gain.js src/mp3gain/MP3gain.ts",
+    "build": "npm run buildmp3gain && npm run buildbinary && npm run buildworker && npm run buildembed && npm run minify",
+    "buildmp3gain": "node_modules/typescript/bin/tsc -d --removeComments --target es5 --sourceMap --outFile dist/mp3gain.js src/mp3gain/MP3gain.ts",
     "buildbinary": "./build.sh",
-    "buildworker": "node_modules/typescript/bin/tsc -d  --target es5 --lib ES5,WebWorker --outFile dist/worker.js src/mp3gain/worker.ts && cat dist/worker.js > dist/mp3gain-worker.js && cat dist/mp3gain-bin.js >> dist/mp3gain-worker.js",
-    "buildembed": "node_modules/typescript/bin/tsc -d  --target es5  --outFile dist/mp3gain-embed.js src/mp3gain/MP3GainEmbed.ts && node build-embed.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "buildworker": "node_modules/typescript/bin/tsc --removeComments  --target es5 --lib ES5,WebWorker --outFile dist/worker.js src/mp3gain/worker.ts && node_modules/uglify-js/bin/uglifyjs --compress --mangle --output dist/worker.js dist/worker.js && cat dist/worker.js > dist/mp3gain-worker.js && cat dist/mp3gain-bin.js >> dist/mp3gain-worker.js",
+    "buildembed": "node_modules/typescript/bin/tsc -d --removeComments --target es5 --outFile dist/mp3gain-embed.js src/mp3gain/MP3GainEmbed.ts && node build-embed.js",
+    "minify": "node_modules/uglify-js/bin/uglifyjs --compress --mangle --output dist/mp3gain.min.js dist/mp3gain.js && node_modules/uglify-js/bin/uglifyjs --compress --mangle --output dist/mp3gain-embed.min.js dist/mp3gain-embed.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rm -Rf dist/"
   }
 }

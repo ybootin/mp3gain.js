@@ -34,6 +34,16 @@ namespace mp3gain {
 			files.forEach((file) => this.addFile(file))
     }
 
+    public removeFile(file: emloader.IFile): void {
+      this.files.slice(this.files.indexOf(file), 1)
+    }
+
+    public removeFiles() {
+      this.files.forEach((file) => {
+        this.removeFile(file)
+      })
+    }
+
     public getOriginalFiles(): Array<emloader.IFile> {
       return this.files
     }
@@ -98,7 +108,6 @@ namespace mp3gain {
         const worker = new Worker(this.binpath)
 
         worker.onmessage = (evt: IPostMessageResponse) => {
-          console.log('got worker response !', evt)
           if (Array.isArray(evt.data)) {
             worker.terminate()
             resolve(evt.data)
@@ -113,7 +122,6 @@ namespace mp3gain {
           arguments: typeof args === 'string' ? args.trim().split(' ') : args,
         })
       })
-
     }
-	}
+  }
 }
