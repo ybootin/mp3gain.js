@@ -175,7 +175,7 @@
         }
 
         function run() {
-          var encoder = new mp3gain.MP3Gain('../dist/mp3gain-bin.js')
+          var encoder = new mp3gain.MP3Gain('../dist/mp3gain-worker.js')
 
           encoder.on(mp3gain.MP3Gain.ON_STDOUT, function(txt) {
             logToConsole(txt, consoleCnt)
@@ -190,7 +190,7 @@
 
           var args = document.getElementById('arguments').value
 
-          encoder.run(args).then(function(files) {
+          encoder.runAsWorker(args).then(function(files) {
             clearContainer(processedContainer)
 
             files.forEach(function(file) {

@@ -85,8 +85,9 @@ namespace mp3gain {
         const worker = new Worker(this.binpath)
 
         worker.onmessage = (evt: IPostMessageResponse) => {
+          console.log('got worker response !', evt)
           if (Array.isArray(evt.data)) {
-            worker.terminate()
+            //worker.terminate()
             resolve(evt.data)
           } else {
             this.emit(evt.data.stderr ? MP3Gain.ON_STDERROR : MP3Gain.ON_STDOUT, evt.data.stderr || evt.data.stdout)
@@ -96,7 +97,7 @@ namespace mp3gain {
         worker.postMessage({
           binpath: this.binpath,
           files: this.files,
-          arguments: args,
+          arguments: typeof args === 'string' ? args.trim().split(' ') : args,
         })
       })
 

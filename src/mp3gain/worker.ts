@@ -1,12 +1,19 @@
-/// <reference path="../../node_modules/emloader/dist/emloader.d.ts" />
+/// <reference path="../../node_modules/typescript/lib/lib.es5.d.ts" />
+/// <reference path="../../node_modules/typescript/lib/lib.webworker.d.ts" />
+/// <reference path="../../node_modules/emloader/src/emloader/model/FS.ts" />
 /// <reference path="./model.ts" />
 
 const mp3path = '/mp3'
+const prefix = 'MP3GAIN - Webworker : '
 
-const Module  = <emloader.IModule><any>{
+const Module  = <mp3gain.IModule><any>{
   noInitialRun: true,
-  print: (text: string): void => postMessage({stdout: text}, '*'),
-  printErr: (err: string): void => postMessage({stderr: err}, '*')
+  print: (stdout: string): void => {
+    postMessage({stdout: stdout})
+  },
+  printErr: (err: string): void => {
+    postMessage({stderr: err})
+  }
 }
 
 function writeFile(filename, data) {
@@ -15,12 +22,8 @@ function writeFile(filename, data) {
   })
 }
 
-function run(args: Array<string>|string, files: Array<emloader.IFile>): void {
-  const safeArgs = Array.isArray(args) ? args : args.trim().split(' ')
-  files.forEach((file) => {
-    safeArgs.push(mp3path + '/' + file.name)
-  })
-  Module.callMain(safeArgs)
+function runWithArgs(args: Array<string>): void {
+  Module.callMain(args)
 }
 
 function response(files: Array<emloader.IFile>) {
@@ -31,18 +34,21 @@ function response(files: Array<emloader.IFile>) {
         encoding: 'binary',
       })
     }
-  }), '*')
+  }))
 }
 
 onmessage = (evt: mp3gain.IMessageEvent) => {
-  // write files into FS
+  const args = evt.data.arguments
+
+  // write files into FS and update arguments
   FS.mkdir(mp3path)
   evt.data.files.forEach((file) => {
     writeFile(mp3path + '/' + file.name, file.data)
+    args.push(mp3path + '/' + file.name)
   })
 
   // exec binary
-  run(evt.data.arguments, evt.data.files)
+  runWithArgs(args)
 
   // send response
   response(evt.data.files)

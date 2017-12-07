@@ -33,11 +33,10 @@
   },
   "scripts": {
     "prepublish": "npm run build",
-    "build": "npm run buildts && npm run buildbinary",
-    "buildts": "npm run buildmp3gain && npm run buildworker",
+    "build": "npm run buildmp3gain && npm run buildbinary && npm run buildworker",
     "buildmp3gain": "node_modules/typescript/bin/tsc -d  --target es5 --sourceMap --outFile dist/mp3gain.js src/mp3gain/MP3gain.ts",
-    "buildworker": "node_modules/typescript/bin/tsc -d  --target es5 --outFile dist/worker.js src/mp3gain/worker.ts",
     "buildbinary": "./build.sh",
+    "buildworker": "node_modules/typescript/bin/tsc -d  --target es5 --lib ES5,WebWorker --outFile dist/worker.js src/mp3gain/worker.ts && cat dist/worker.js > dist/mp3gain-worker.js && cat dist/mp3gain-bin.js >> dist/mp3gain-worker.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
