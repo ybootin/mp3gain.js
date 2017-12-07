@@ -29,7 +29,7 @@
   "dependencies": {},
   "devDependencies": {
     "typescript": "^2.6.2",
-    "emloader": "^0.0.5"
+    "emloader": "^0.0.6"
   },
   "scripts": {
     "prepublish": "npm run build",
