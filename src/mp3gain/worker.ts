@@ -1,4 +1,4 @@
-
+/// <reference path="../../node_modules/emloader/dist/emloader.d.ts" />
 /// <reference path="./model.ts" />
 
 const mp3path = '/mp3'
@@ -36,9 +36,9 @@ function response(files: Array<emloader.IFile>) {
 
 onmessage = (evt: mp3gain.IMessageEvent) => {
   // write files into FS
-  FS.mkdir('/mp3')
+  FS.mkdir(mp3path)
   evt.data.files.forEach((file) => {
-    writeFile('/mp3/' + file.name, file.data)
+    writeFile(mp3path + '/' + file.name, file.data)
   })
 
   // exec binary
