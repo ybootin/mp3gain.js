@@ -12,15 +12,14 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
     <script src="../dist/mp3gain-embed.js"></script>
     <style>
-      #original-container:after {
+      .original:after {
         content: "MP3";
       }
-      #processed-container:after {
+      .processed:after {
         content: "Processed MP3";
       }
-
-      #files-container li {
-        list-style-type: none;
+      .console:after {
+        content: "MP3GAIN output";
       }
 
       .bordered-container {
@@ -36,7 +35,7 @@
         font-size: 12px;
         min-height: 180px;
         max-height: 180px;
-        overflow: scroll;
+        overflow: hidden;
       }
 
       .bordered-container:after {
@@ -54,12 +53,37 @@
         border-radius: 4px 0 4px 0;
       }
 
+      .bordered-container ul {
+        margin-top: 0;
+        margin-bottom: 0;
+        -webkit-padding-start: 0;
+        max-height: 140px;
+        overflow: scroll;
+      }
+
       .bordered-container li {
         list-style-type: none;
       }
 
-      #console:after {
-        content: "MP3GAIN output";
+      .bordered-container .clear-button {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        cursor: pointer;
+        color:#999999
+      }
+
+      .bordered-container .clear-button:hover {
+        color: black;
+      }
+
+      .processing {
+        display: none;
+      }
+
+      #console {
+        overflow: scroll;
+        max-height: 140px;
       }
 
       #console .error {
@@ -117,6 +141,14 @@
         })
       }
 
+      function addEmpty(content, container) {
+        var empty = document.createElement('li')
+        empty.className = 'empty'
+        empty.innerHTML = content
+
+        container.appendChild(empty)
+      }
+
       $(document).ready(function() {
         var addBtn = document.getElementById('add-file-button')
         var runBtn = document.getElementById('run-button')
@@ -128,9 +160,28 @@
         var originalContainer = document.getElementById('original-container')
         var processedContainer = document.getElementById('processed-container')
 
+        var processing = document.getElementById('processing')
+        var processingTotal = processing.getElementsByClassName('total')[0]
+
         var audio = document.createElement('audio')
 
-        var files = []
+        var encoder = mp3gain.getInstance()
+
+        encoder.on(mp3gain.MP3Gain.ON_STDOUT, function(txt) {
+          logToConsole(txt, consoleCnt)
+        })
+        encoder.on(mp3gain.MP3Gain.ON_STDERROR, function(txt) {
+          logToConsole(txt, consoleCnt, true)
+        })
+
+        function showProcessing(total) {
+          processing.style.display = 'block'
+          processingTotal.innerHTML = total
+        }
+
+        function hideProcessing() {
+          processing.style.display = 'none'
+        }
 
         function addFile(file) {
           return new Promise(function(resolve, reject) {
@@ -142,7 +193,8 @@
                 data: new Uint8Array(reader.result)
               }
 
-              files.push(data)
+              encoder.addFile(data)
+
               addFileLine(data, originalContainer)
               resolve(data)
             })
@@ -201,21 +253,10 @@
         }
 
         function run() {
-          //var encoder = new mp3gain.MP3Gain('../dist/mp3gain-worker.js')
-          var encoder = mp3gain.getInstance()
-
-          encoder.on(mp3gain.MP3Gain.ON_STDOUT, function(txt) {
-            logToConsole(txt, consoleCnt)
-          })
-          encoder.on(mp3gain.MP3Gain.ON_STDERROR, function(txt) {
-            logToConsole(txt, consoleCnt, true)
-          })
-
-          files.forEach(function(file) {
-            encoder.addFile(file)
-          })
-
           var args = document.getElementById('arguments').value
+
+          clearContainer(processedContainer)
+          addEmpty('<span class="glyphicon glyphicon-refresh"></span> Processing ' + encoder.getOriginalFiles().length + ' MP3, with argument "' + args + '"', processedContainer)
 
           encoder.run(args).then(function(files) {
             clearContainer(processedContainer)
@@ -225,11 +266,7 @@
             })
 
             if (files.length === 0) {
-              var empty = document.createElement('li')
-              empty.className = 'empty'
-              empty.innerHTML = 'No file processed by encoder'
-
-              processedContainer.appendChild(empty)
+              addEmpty('No file processed by encoder', processedContainer)
             }
 
             // enable run btn
@@ -255,6 +292,20 @@
           runBtn.disabled = true
           run()
         })
+
+        // clear buttons
+        document.getElementById('clear-console').addEventListener('click', function(evt) {
+          clearContainer(consoleCnt)
+        })
+        document.getElementById('clear-original').addEventListener('click', function(evt) {
+          encoder.removeFiles()
+          clearContainer(originalContainer)
+          addEmpty('No MP3 added', originalContainer)
+        })
+        document.getElementById('clear-processed').addEventListener('click', function(evt) {
+          clearContainer(processedContainer)
+          addEmpty('No MP3 processed, add file(s) and press run !', processedContainer)
+        })
       })
     </script>
   </head>
@@ -279,10 +330,20 @@
           <input id="arguments" type="text" class="form-control" value="-a">
         </div>
         <form>
-          <ul id="original-container" class="bordered-container"><li class="empty">No MP3 added</li></ul>
-          <ul id="processed-container" class="bordered-container"><li class="empty">No MP3 processed, add file(s) and press run !</li></ul>
+          <div class="bordered-container original">
+            <ul id="original-container"><li class="empty">No MP3 added</li></ul>
+            <div class="clear-button"><div id="clear-original" class="glyphicon glyphicon-remove-circle" title="clear"></div></div>
+          </div>
+          <div class="bordered-container processed">
+            <ul id="processed-container"><li class="empty">No MP3 processed, add file(s) and press run !</li></ul>
+            <div class="clear-button"><div id="clear-processed" class="glyphicon glyphicon-remove-circle"></div></div>
+            <div id="processing" class="processing">Processing <span class="total"></span>MP3</div>
+          </div>
           <input type="file" multiple accept="audio/mp3" id="input-file" style="display:none">
-          <div id="console" class="bordered-container"></div>
+          <div class="bordered-container console">
+            <div id="console"></div>
+            <div class="clear-button"><div id="clear-console" class="glyphicon glyphicon-remove-circle"></div></div>
+          </div>
         </form>
       </div>
     </div>
