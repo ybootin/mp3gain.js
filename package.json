@@ -36,7 +36,7 @@
     "build": "npm run buildts && npm run buildbinary",
     "buildts": "npm run buildmp3gain && npm run buildworker",
     "buildmp3gain": "node_modules/typescript/bin/tsc -d  --target es5 --sourceMap --outFile dist/mp3gain.js src/mp3gain/MP3gain.ts",
-    "buildworker": "node_modules/typescript/bin/tsc -d  --target es5 --sourceMap --outFile dist/worker.js src/mp3gain/worker.ts",
+    "buildworker": "node_modules/typescript/bin/tsc -d  --target es5 --outFile dist/worker.js src/mp3gain/worker.ts",
     "buildbinary": "./build.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   }

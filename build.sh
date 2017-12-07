@@ -8,12 +8,12 @@ OUTPUT_PATH="dist/"
 OUTPUT_FILENAME="mp3gain-bin.js"
 MP3GAIN_PATH="$(pwd)/mp3gain"
 
-# Docker env var (ybootin/mamejs-compiler:latest on dockerhub)
-DOCKER_IMAGE_NAME="mamejs-compiler:latest"
-DOCKER_IMAGE="ybootin/$DOCKER_IMAGE_NAME"
+# Docker Emscripten compiler
+DOCKER_IMAGE="apiaryio/emcc:latest"
+EMMAKE_PATH="emmake"
 
 # emmake command inside the docker machine
-EMMAKE_CMD="docker run --rm -v $MP3GAIN_PATH:/build -w /build $DOCKER_IMAGE /emsdk_portable/emscripten/master/emmake"
+EMMAKE_CMD="docker run --rm -v $MP3GAIN_PATH:/build -w /build $DOCKER_IMAGE $EMMAKE_PATH"
 
 $EMMAKE_CMD make mp3gain OUTPUTNAME=$OUTPUT_FILENAME
 
