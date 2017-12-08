@@ -1,6 +1,6 @@
 {
   "name": "mp3gain.js",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "port of mp3gain in javascript, ajust gain of your MP3 inside your browser",
   "repository": {
     "type": "git",
