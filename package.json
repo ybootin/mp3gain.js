@@ -41,6 +41,7 @@
     "buildmp3gain": "node_modules/typescript/bin/tsc -d --removeComments --target es5 --outFile dist/mp3gain.js src/mp3gain/MP3Gain.ts && node build-embed.js",
     "minify": "node_modules/uglify-js/bin/uglifyjs --compress --mangle --output dist/mp3gain.min.js dist/mp3gain.js && node_modules/uglify-js/bin/uglifyjs --compress --mangle --output dist/mp3gain-wrapper.min.js dist/mp3gain-wrapper.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "clean": "rm -Rf dist/"
+    "clean": "rm -Rf dist/",
+    "gh-pages": "git checkout gh-pages && git rebase master && npm run build && git add -f dist/* && git commit --amend -m 'update gh-pages' && git push -f origin gh-pages && git checkout -"
   }
 }
