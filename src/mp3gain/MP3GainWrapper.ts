@@ -10,6 +10,10 @@ declare var window: Window
 namespace mp3gain {
   export const ON_STDERROR: string =  'onstderror'
   export const ON_STDOUT: string = 'onstdout'
+  export const ON_PROGRESS: string = 'onprogress'
+
+  export const ANALYSING: string = 'analysing'
+  export const PROCESSING: string = 'processing'
 
   /**
    * MP3 path inside emscripten FS
@@ -27,6 +31,9 @@ namespace mp3gain {
      */
 		constructor(protected binpath: string) {
       super()
+
+      this.on(ON_STDOUT, this.parseStd.bind(this, false))
+      this.on(ON_STDERROR, this.parseStd.bind(this, true))
     }
 
     /**
@@ -140,6 +147,23 @@ namespace mp3gain {
           binpath: this.binpath,
           files: this.files,
           arguments: typeof args === 'string' ? args.trim().split(' ') : args,
+        })
+      })
+    }
+
+    /**
+     * Parse std output, and emit custom events
+     *
+     * @param error
+     * @param msg
+     */
+    private parseStd(error: boolean = false, msg: string): void {
+      this.files.filter((file) => {
+        return msg.indexOf(file.name) > -1
+      }).map((file) => {
+        this.emit(ON_PROGRESS, {
+          type: msg === file.name ? ANALYSING : PROCESSING,
+          file: file,
         })
       })
     }
