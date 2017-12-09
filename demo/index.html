@@ -81,6 +81,12 @@
         display: none;
       }
 
+      .bordered-container.console .options {
+        position: absolute;
+        top: 2px;
+        left: 150px;
+      }
+
       #console {
         overflow: scroll;
         max-height: 140px;
@@ -128,17 +134,6 @@
         return (num < 10 ? "0" : "") + num;
       }
 
-      function logToConsole(data, container, error) {
-        var date = new Date();
-        name = JSON.stringify(data).replace('\\t', '&nbsp;&nbsp;&nbsp;&nbsp;').replace('\\r', '<br />')
-
-        var element = document.createElement('div')
-        element.innerHTML = '<span class="date">' + formatDate(date.getHours()) + ':' + formatDate(date.getMinutes()) + ':' + formatDate(date.getSeconds()) + '</span> <span class="value">' + name + '</span>'
-        element.className = (error ? ' error' : '')
-
-        container.appendChild(element)
-      }
-
       function clearContainer(container) {
         Array.from(container.children).forEach(function(child) {
           container.removeChild(child)
@@ -159,13 +154,24 @@
         var runGlyphicon = runBtn.getElementsByClassName('glyphicon-play')[0]
 
         var consoleCnt = document.getElementById('console')
+        var showStderrInput = document.getElementById('show-stderr')
+        var showStdoutInput = document.getElementById('show-stdout')
+        var showRawInput = document.getElementById('show-raw')
+
+        function logToConsole(name, container, error) {
+          var date = new Date();
+
+          var element = document.createElement('div')
+          element.innerHTML = '<span class="date" style="display:' + (showRawInput.checked ? 'none': 'inline') + ';">' + formatDate(date.getHours()) + ':' + formatDate(date.getMinutes()) + ':' + formatDate(date.getSeconds()) + '</span> <span class="value">' + name + '</span>'
+          element.className = (error ? 'error' : '')
+          element.style.display = (error && showStderrInput.checked === true) || (!error && showStdoutInput.checked === true) ? 'block' : 'none'
+
+          container.appendChild(element)
+        }
 
         var inputFile = document.getElementById('input-file')
         var originalContainer = document.getElementById('original-container')
         var processedContainer = document.getElementById('processed-container')
-
-        var processing = document.getElementById('processing')
-        var processingTotal = processing.getElementsByClassName('total')[0]
 
         var audio = document.createElement('audio')
 
@@ -178,15 +184,6 @@
         encoder.on(mp3gain.ON_STDERROR, function(txt) {
           logToConsole(txt, consoleCnt, true)
         })
-
-        function showProcessing(total) {
-          processing.style.display = 'block'
-          processingTotal.innerHTML = total
-        }
-
-        function hideProcessing() {
-          processing.style.display = 'none'
-        }
 
         function addFile(file) {
           return (new Promise(function(resolve, reject) {
@@ -302,6 +299,7 @@
         // for easy trigger inside demo
         window.run = run
 
+        // handle upload file
         inputFile.onchange = function(evt) {
           Array.from(evt.target.files).forEach(function(file) {
             addFile(file)
@@ -314,6 +312,22 @@
 
         runBtn.addEventListener('click', function() {
           run()
+        })
+
+        // show hide errors
+        var showHideStd = function(stderr, evt) {
+          Array.from(consoleCnt.children).forEach(function(child) {
+            if ((stderr && child.className === 'error') || (!stderr && child.className !== 'error')) {
+              child.style.display = evt.target.checked ? 'block' : 'none'
+            }
+          })
+        }
+        showStdoutInput.addEventListener('change', showHideStd.bind(null, false))
+        showStderrInput.addEventListener('change', showHideStd.bind(null, true))
+        showRawInput.addEventListener('change', function(evt) {
+          Array.from(consoleCnt.children).forEach(function(child) {
+            child.getElementsByClassName('date')[0].style.display = evt.target.checked === true ? 'none' : 'inline'
+          })
         })
 
         // clear buttons
@@ -340,7 +354,7 @@
         MP3Gain.js is the port of <a href="http://mp3gain.sourceforge.net/" target="_blank">mp3gain</a> in javascript via emscripten.
         mp3gain can analyze and adjust mp3 files  so that they have the same volume.<br />
         Display command list, use <a href='javascript:document.getElementById("arguments").value="-h";run()'>-h argument</a>.
-        Original mp3gain documentation available <a href="https://www.mankier.com/1/mp3gain" target="_blank">here</a>.<br />
+        Original mp3gain documentation available <a href="https://github.com/ybootin/mp3gain.js#run-arguments" target="_blank">here</a>.<br />
       </p>
       <div clas="row">
         <div class="form-inline">
@@ -362,12 +376,19 @@
           <div class="bordered-container processed">
             <ul id="processed-container"><li class="empty">No MP3 processed, add file(s) and press run !</li></ul>
             <div class="clear-button"><div id="clear-processed" class="glyphicon glyphicon-remove-circle"></div></div>
-            <div id="processing" class="processing">Processing <span class="total"></span>MP3</div>
           </div>
           <input type="file" multiple accept="audio/mp3" id="input-file" style="display:none">
           <div class="bordered-container console">
             <div id="console"></div>
             <div class="clear-button"><div id="clear-console" class="glyphicon glyphicon-remove-circle"></div></div>
+            <div class="options">
+                <input type="checkbox" id="show-raw" value="1">
+                <label for="show-raw">raw</label>
+              <input type="checkbox" id="show-stdout" value="1" checked>
+              <label for="show-stdout">stdout</label>
+              <input type="checkbox" id="show-stderr" value="1" checked>
+              <label for="show-stderr">stderr</label>
+            </div>
           </div>
         </form>
       </div>

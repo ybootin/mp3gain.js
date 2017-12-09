@@ -35,7 +35,7 @@
   "scripts": {
     "prepublish": "npm run build",
     "build": "npm run buildwrapper && npm run buildbinary && npm run buildworker && npm run buildmp3gain && npm run minify",
-    "buildwrapper": "node_modules/typescript/bin/tsc -d --removeComments --target es5 --sourceMap --outFile dist/mp3gain-wrapper.js src/mp3gain/MP3gain.ts",
+    "buildwrapper": "node_modules/typescript/bin/tsc -d --removeComments --target es5 --sourceMap --outFile dist/mp3gain-wrapper.js src/mp3gain/MP3gainWrapper.ts",
     "buildbinary": "./build.sh",
     "buildworker": "node_modules/typescript/bin/tsc --removeComments  --target es5 --lib ES5,WebWorker --outFile dist/worker.js src/mp3gain/worker.ts && node_modules/uglify-js/bin/uglifyjs --compress --mangle --output dist/worker.js dist/worker.js && cat dist/worker.js > dist/mp3gain-worker.js && cat dist/mp3gain-bin.js >> dist/mp3gain-worker.js",
     "buildmp3gain": "node_modules/typescript/bin/tsc -d --removeComments --target es5 --outFile dist/mp3gain.js src/mp3gain/MP3Gain.ts && node build-embed.js",

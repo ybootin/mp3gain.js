@@ -2,9 +2,6 @@
 
 mp3gain.js is the port of [MP3Gain](http://mp3gain.sourceforge.net/) in javascript via [Emscripten](http://kripken.github.io/emscripten-site/).
 
-MP3Gain does not just do peak normalization, as many normalizers do. Instead, it does some statistical analysis to determine how loud the file actually sounds to the human ear.
-Also, the changes MP3Gain makes are completely lossless. There is no quality lost in the change because the program adjusts the mp3 file directly, without decoding and re-encoding.
-
 [Online demo available here](https://ybootin.github.io/mp3gain.js/demo)
 
 ## Description
@@ -31,32 +28,32 @@ The js files are available in the `node_modules/mp3gain.js/dist` folder :
 
 This is project is only for browser use, Nodejs is not supported at this time.
 For a quick start, we recommand using the `mp3gain.js` file.
+```
+<script src="/path/to/mp3gain.js"></script>
+<script>
+  // instanciate the normalizer
+  var normalizer = mp3gain.getInstance()
 
-    <script src="/path/to/mp3gain.js"></script>
-    <script>
-      // instanciate the normalizer
-      var normalizer = mp3gain.getInstance()
-
-      // load files to be normalized from URL (must be accessible with CORS)
-      // will return a promise
-      normalizer.loadFiles([
-        'http://mydomain/myfile1.mp3',
-        'http://mydomain/myfile2.mp3',
-      ])
-      .then(function(files) { // files is an array of {name: filename, data: UInt8Array}
-        // at this point your files are loaded into the app and ready to be normalized
-        // the run method take a list of arguments, available here, and return a promise with the normalized files once done
-        // -a arg will normalize gain for the wholes files (album gain)
-        return normalizer.run('-a')
-      }).then(function(normalizedFiles) {
-        // normalizedFiles is an array of {name: filename, data: UInt8Array}
-        console.log(normalizedFiles)
-      }).catch(function(error) {
-        // catch error from load or normalized here
-        console.error(error)
-      })
-    </script>
-
+  // load files to be normalized from URL (must be accessible with CORS)
+  // will return a promise
+  normalizer.loadFiles([
+    'http://mydomain/myfile1.mp3',
+    'http://mydomain/myfile2.mp3',
+  ])
+  .then(function(files) { // files is an array of {name: filename, data: UInt8Array}
+    // at this point your files are loaded into the app and ready to be normalized
+    // the run method take a list of arguments, available here, and return a promise with the normalized files once done
+    // -a arg will normalize gain for the wholes files (album gain)
+    return normalizer.run('-a')
+  }).then(function(normalizedFiles) {
+    // normalizedFiles is an array of {name: filename, data: UInt8Array} @see #common-interface-for-file
+    console.log(normalizedFiles)
+  }).catch(function(error) {
+    // catch error from load or normalized here
+    console.error(error)
+  })
+</script>
+```
 ## JS API Documentation
 
 ### Common interface for file
@@ -135,7 +132,7 @@ To use the original "wrapping" behavior, use the `-w` switch.
 
 ### Use the mp3gain-wrapper.js as main asset to reduce page time load
 
-mp3gain.js is easy for a quick start, because it embed the binary and the worker, so you don't have to deal with others assets. But the file size is big (650k minified, 210k gzip), and probably you'll prefer use the mp3gain-wrapper.js which is only 10k gzip.
+mp3gain.js is easy for a quick start, because it embed the binary and the worker, so you don't have to deal with others assets. But the file size is big (650k minified, 210k gzip), and probably you'll prefer use the mp3gain-wrapper.js which is less than 10k gzip.
 
 mp3gain-wrapper.js use the exact same interface than mp3gain.js, only the instanciation change :
 
