@@ -34,9 +34,9 @@ For a quick start, we recommand using the `mp3gain.js` file.
   // instanciate the normalizer
   var normalizer = mp3gain.getInstance()
 
-  // load files to be normalized from URL (must be accessible with CORS)
+  // add files to be normalized from URL (must be accessible with CORS)
   // will return a promise
-  normalizer.loadFiles([
+  normalizer.addFiles([
     'http://mydomain/myfile1.mp3',
     'http://mydomain/myfile2.mp3',
   ])
@@ -56,7 +56,7 @@ For a quick start, we recommand using the `mp3gain.js` file.
 ```
 ## JS API Documentation
 
-### Common interface for file
+### Common file interface 
 
     interface IFile {
       name: string,
@@ -68,14 +68,12 @@ instanciate mp3gain with `mp3gain.getInstance()`
 
 method           | description 
 -----------------|-------------
-`addFile(file: IFile): void`| add a binary file to normalize 
-`addFiles(files: Array<IFile>): void`| add multiples binary files to normalize 
-`loadFile(name: string, url: string): Promise<IFile>`| load MP3 file with xhr, and add it 
-`loadFiles(files: Array<string>): Promise<IFile[]>`| load MP3 files with xhr, and add them 
-`removeFile(file: IFile): void` | remove file to normalize 
-`removeFiles(): void` | remove all files to normalize 
-`getOriginalFiles(): Array<IFile>` |  return the added files with addFile 
-`run(args: string): Promise<IFile[]>` | launch the processing and return a promise with all the normalized files, see run arguments bellow
+`addFile(file: IFile|string): Promise<IFile>`| add a file to normalize, the file can be an IFile object or an url
+`addFiles(files: Array<IFile|string>): Promise<IFile[]>`| add multiples files to normalize 
+`removeFile(file: IFile): boolean` | remove file to normalize 
+`removeFiles(): IFile[]` | remove all files to normalize, and return all removed files
+`getFiles(): Array<IFile>` |  return all the added files
+`run(args: string): Promise<IFile[]>` | launch the processing and return a promise with all the normalized files. You can call this method as many time as you want, it will process registered files each time. see run arguments bellow
 
 
 ## run arguments
@@ -142,7 +140,7 @@ mp3gain-wrapper.js use the exact same interface than mp3gain.js, only the instan
       var normalizer = new mp3gain.MP3GainWrapper('/path/to/mp3gain-worker.js')
 
       // ... then do the stuff as usual !
-      normalizer.loadFiles([...]).then(function() {
+      normalizer.addFiles([...]).then(function() {
         return normalizer.run('-a)
       }).then(function(normalizedFiles) {
         // do what you want with your files

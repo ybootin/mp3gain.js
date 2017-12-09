@@ -11,60 +11,77 @@ namespace mp3gain {
   export const ON_STDERROR: string =  'onstderror'
   export const ON_STDOUT: string = 'onstdout'
 
+  /**
+   * MP3 path inside emscripten FS
+   */
+  export const mp3Path: string = '/mp3'
+
 	export class MP3GainWrapper extends emloader.event.EventEmiter {
     /**
-     * Holds files to process on run
+     * Holds files to process on run, not mutable
      */
     private files: Array<emloader.IFile> = []
 
     /**
-     * MP3 path inside emscripten FS
+     * @param binpath specify the mp3gain js compiled file to use
      */
-    private mp3Path: string = '/mp3'
-
 		constructor(protected binpath: string) {
       super()
     }
 
-		public addFile(file: emloader.IFile): void {
-			this.files.push(file)
-		}
-
-		public addFiles(files: Array<emloader.IFile>): void {
-			files.forEach((file) => this.addFile(file))
-    }
-
-    public removeFile(file: emloader.IFile): void {
-      const index = this.files.indexOf(file)
-      if (index > -1) {
-        this.files.splice(index, 1)
+    /**
+     * add an IFile or an mp3 as url into mp3gain
+     * @param fileOrUrl an IFile object or a valid MP3 url accessible with CORS
+     */
+		public addFile(fileOrUrl: emloader.IFile|string): Promise<emloader.IFile> {
+      if (typeof fileOrUrl === 'string') {
+        return emloader.helper.FileLoader.loadFile(fileOrUrl, fileOrUrl.split('/').reverse()[0]).then((file) => {
+          this.files.push(file)
+          return file
+        })
+      } else {
+        this.files.push(fileOrUrl)
+        return Promise.resolve(fileOrUrl)
       }
     }
 
-    public removeFiles() {
-      this.files.forEach((file) => {
-        this.removeFile(file)
-      })
+    /**
+     * add multiple IFile or an mp3 as url into mp3gain
+     */
+		public addFiles(filesOrUrls: Array<emloader.IFile|string>): Promise<emloader.IFile[]> {
+			return Promise.all(filesOrUrls.map((file) => this.addFile(file)))
     }
 
-    public getOriginalFiles(): Array<emloader.IFile> {
+    /**
+     * remove file from mp3gain.
+     */
+    public removeFile(file: emloader.IFile): boolean {
+      const index = this.files.indexOf(file)
+      if (index > -1) {
+        this.files.splice(index, 1)
+        return true
+      }
+
+      return false
+    }
+
+    /**
+     * remove files from mp3gain.
+     */
+    public removeFiles(): Array<emloader.IFile> {
+      return this.files.splice(0, this.files.length)
+    }
+
+    /**
+     * retrieve all the added files
+     */
+    public getFiles(): Array<emloader.IFile> {
       return this.files
     }
 
-		public loadFile(name, url): Promise<emloader.IFile> {
-			return emloader.helper.FileLoader.loadFile(url, name).then((file) => {
-        this.files.push(file)
-
-        return file
-      })
-    }
-
-    public loadFiles(files: Array<string>): Promise<emloader.IFile[]> {
-      return Promise.all(files.map((file) => {
-        return this.loadFile(file.split('/').reverse()[0], file)
-      }))
-    }
-
+    /**
+     * run the normalization, and return the processed files
+     */
     public run(args: Array<string>|string): Promise<emloader.IFile[]> {
       if (window.Worker) {
         return this.runAsWorker(args)
@@ -77,11 +94,11 @@ namespace mp3gain {
       return emloader.loadHeadless(this.binpath).then((loader) => {
         const safeArgs = Array.isArray(args) ? args : args.trim().split(' ')
 
-        loader.FS.mkdir(this.mp3Path)
+        loader.FS.mkdir(mp3Path)
 
         this.files.forEach((file) => {
-          loader.addFile(file, this.mp3Path)
-          safeArgs.push(this.mp3Path + '/' + file.name)
+          loader.addFile(file, mp3Path)
+          safeArgs.push(mp3Path + '/' + file.name)
         })
 
         loader.on(emloader.Emloader.ON_STDOUT, (output: string) => {
@@ -92,12 +109,12 @@ namespace mp3gain {
         })
 
         return loader.run(safeArgs).then(() => {
-          return loader.FS.readdir(this.mp3Path).filter((filename) => {
+          return loader.FS.readdir(mp3Path).filter((filename) => {
             return !!this.files.find((file) => file.name === filename)
           }).map((filename): emloader.IFile => {
             return {
               name: filename,
-              data: loader.FS.readFile(this.mp3Path + '/' + filename, {
+              data: loader.FS.readFile(mp3Path + '/' + filename, {
                 encoding: 'binary',
               }),
             }
