@@ -16,9 +16,11 @@ The method mp3gain uses to determine the desired volume  is described at  www.re
 
 ## Usage
 
-You can install the lib via NPM: 
+You can install the lib through NPM: 
 
     npm install --save mp3gain.js
+
+Or download it on github release : https://github.com/ybootin/mp3gain.js/releases
 
 The js files are available in the `node_modules/mp3gain.js/dist` folder : 
 
@@ -28,7 +30,7 @@ The js files are available in the `node_modules/mp3gain.js/dist` folder :
 
 This is project is only for browser use, Nodejs is not supported at this time.
 For a quick start, we recommand using the `mp3gain.js` file.
-```
+```html
 <script src="/path/to/mp3gain.js"></script>
 <script>
   // instanciate the normalizer
@@ -66,17 +68,45 @@ For a quick start, we recommand using the `mp3gain.js` file.
 ### mp3gain instance methods
 instanciate mp3gain with `mp3gain.getInstance()`
 
-method           | description 
------------------|-------------
-`addFile(file: IFile|string): Promise<IFile>`| add a file to normalize, the file can be an IFile object or an url
-`addFiles(files: Array<IFile|string>): Promise<IFile[]>`| add multiples files to normalize 
-`removeFile(file: IFile): boolean` | remove file to normalize 
-`removeFiles(): IFile[]` | remove all files to normalize, and return all removed files
-`getFiles(): Array<IFile>` |  return all the added files
-`run(args: string): Promise<IFile[]>` | launch the processing and return a promise with all the normalized files. You can call this method as many time as you want, it will process registered files each time. see run arguments bellow
+|method           | description |
+|-----------------|-------------|
+|`addFile(file: IFile\|string): Promise<IFile>`| add a file to normalize, the file can be an IFile object or an url |
+|`addFiles(files: Array<IFile\|string>): Promise<IFile[]>`| add multiples files to normalize 
+|`removeFile(file: IFile): boolean` | remove file to normalize  |
+|`removeFiles(): IFile[]` | remove all files to normalize, and return all removed files |
+|`getFiles(): Array<IFile>` |  return all the added files |
+|`run(args: Array<string>\|string): Promise<IFile[]>` | launch the processing and return a promise with all the normalized  files. You can call this method as many time as you want, it will process registered files each time. @see [Run arguments](#run-arguments)
+|`on(eventName: string, callback: Function): void` | attach a callback to an event, @see [Events](#events) |
+|`off(eventName: string, callback: Function): void` | remove a callback to an event, @see [Events](#events) |
 
+### Events 
 
-## run arguments
+You must attach callbacks before call the run function : 
+
+```javascript
+var normalizer = mp3gain.getInstance()
+
+normalizer.on(mp3gain.ON_STDOUT, function(data) {
+  console.log('Got stdout', data.stdout)
+})
+
+normalizer.addFiles([
+  'http://mydomain/myfile1.mp3',
+  'http://mydomain/myfile2.mp3',
+])
+.then(function(files) {
+  return normalizer.run('-a -o')
+}).then(function(files) {
+  console.log('got normalized files', files)
+})
+```
+
+| Event name       | data                | description |
+|------------------|---------------------|-------------|
+|`mp3gain.ON_STDOUT` | {stdout: string} | mp3gain instance trigger one stdout line |
+|`mp3gain.ON_STDERROR` | {stderror: string} | mp3gain instance trigger one stderror line |
+
+## Run arguments
 Adapted from [from debian documentation](https://www.mankier.com/1/mp3gain)
 
 arguments | descriptions 
@@ -134,21 +164,22 @@ mp3gain.js is easy for a quick start, because it embed the binary and the worker
 
 mp3gain-wrapper.js use the exact same interface than mp3gain.js, only the instanciation change :
 
-    <script src="/path/to/mp3gain-wrapper.js"></script>
-    <script>
-      // instanciate the normalizer, by specified the path of the worker
-      var normalizer = new mp3gain.MP3GainWrapper('/path/to/mp3gain-worker.js')
+```html
+<script src="/path/to/mp3gain-wrapper.js"></script>
+<script>
+  // instanciate the normalizer, by specified the path of the worker
+  var normalizer = new mp3gain.MP3GainWrapper('/path/to/mp3gain-worker.js')
 
-      // ... then do the stuff as usual !
-      normalizer.addFiles([...]).then(function() {
-        return normalizer.run('-a)
-      }).then(function(normalizedFiles) {
-        // do what you want with your files
-      }).catch(function(error) {
-        // handle error
-      })
-    </script>
-
+  // ... then do the stuff as usual !
+  normalizer.addFiles([...]).then(function() {
+    return normalizer.run('-a')
+  }).then(function(normalizedFiles) {
+    // do what you want with your files
+  }).catch(function(error) {
+    // handle error
+  })
+</script>
+``` 
 
 ## Build
 
