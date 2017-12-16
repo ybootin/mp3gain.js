@@ -14,6 +14,8 @@ namespace mp3gain {
 
   export const ANALYSING: string = 'analysing'
   export const PROCESSING: string = 'processing'
+  export const ERROR: string = 'error'
+  export const WARNING: string = 'warning'
 
   /**
    * MP3 path inside emscripten FS
@@ -31,9 +33,6 @@ namespace mp3gain {
      */
 		constructor(protected binpath: string) {
       super()
-
-      this.on(ON_STDOUT, this.parseStd.bind(this, false))
-      this.on(ON_STDERROR, this.parseStd.bind(this, true))
     }
 
     /**
@@ -132,38 +131,70 @@ namespace mp3gain {
 
     public runAsWorker(args: Array<string>|string): Promise<emloader.IFile[]> {
       return new Promise((resolve, reject) => {
-        const worker = new Worker(this.binpath)
+        // clone array to avoid mutations during run
+        const files = Array.from(this.files)
 
+        const arrayArgs = typeof args === 'string' ? args.trim().split(' ') : args
+        const stringArgs = Array.isArray(args) ? args : args.split(' ')
+
+        // holds files during processing
+        const analysed: Array<emloader.IFile> = []
+        const processed: Array<emloader.IFile> = []
+
+        const parseStd = (msg: string, error: boolean): void => {
+          const applyed = files.filter((file) => {
+            return msg.indexOf(file.name) > -1
+          }).map((file) => {
+            // the first message containing a filename is always analysis, except if disable
+            // -g or -l arg disable analysis
+            if (!error && analysed.indexOf(file) === -1 && ['-g', '-l'].filter((arg) => arrayArgs.indexOf(arg) === -1).length === 2) {
+              analysed.push(file)
+              this.emit(ANALYSING, file)
+            }
+            // the second message containing a filename is the processing, except if disabled
+            // -s s arg disable processing
+            else if (!error && processed.indexOf(file) === -1 && stringArgs.indexOf('-s s') === -1) {
+              processed.push(file)
+              this.emit(PROCESSING, file)
+            }
+            // file error parsing
+            else if (error) {
+              this.emit(ERROR, {
+                message: msg,
+                file: file
+              })
+            }
+          })
+
+          // other sterr parsing
+          if (applyed.length === 0 && error) {
+            const skip: boolean = ['-h', '-v'].filter((arg) => arrayArgs.indexOf(arg) === -1).length === 2
+            if (msg.indexOf('WARNING') > -1) {
+              this.emit(WARNING, msg)
+            }
+            // avoid error on -h -v args
+            else if (!skip || (processed.length === files.length || analysed.length === files.length)) {
+              // @TODO handle others errors
+            }
+          }
+        }
+
+        const worker = new Worker(this.binpath)
         worker.onmessage = (evt: IPostMessageResponse) => {
           if (Array.isArray(evt.data)) {
             worker.terminate()
             resolve(evt.data)
           } else {
-            this.emit(evt.data.stderr ? ON_STDERROR : ON_STDOUT, evt.data.stderr || evt.data.stdout)
+            const msg = evt.data.stderr || evt.data.stdout
+            const evtName = evt.data.stderr ? ON_STDERROR : ON_STDOUT
+            this.emit(evtName, msg)
+            parseStd(msg, evtName === ON_STDERROR)
           }
         }
 
         worker.postMessage({
-          binpath: this.binpath,
-          files: this.files,
-          arguments: typeof args === 'string' ? args.trim().split(' ') : args,
-        })
-      })
-    }
-
-    /**
-     * Parse std output, and emit custom events
-     *
-     * @param error
-     * @param msg
-     */
-    private parseStd(error: boolean = false, msg: string): void {
-      this.files.filter((file) => {
-        return msg.indexOf(file.name) > -1
-      }).map((file) => {
-        this.emit(ON_PROGRESS, {
-          type: msg === file.name ? ANALYSING : PROCESSING,
-          file: file,
+          files: files,
+          arguments: arrayArgs,
         })
       })
     }
